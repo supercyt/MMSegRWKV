@@ -82,49 +82,6 @@ class MlpChannel(nn.Module):
         return x
 
 
-# class GSC(nn.Module):
-#     def __init__(self, in_channles) -> None:
-#         super().__init__()
-#
-#         self.proj = nn.Conv3d(in_channles, in_channles, 3, 1, 1)
-#         self.norm = nn.InstanceNorm3d(in_channles)
-#         self.nonliner = nn.ReLU()
-#
-#         self.proj2 = nn.Conv3d(in_channles, in_channles, 3, 1, 1)
-#         self.norm2 = nn.InstanceNorm3d(in_channles)
-#         self.nonliner2 = nn.ReLU()
-#
-#         self.proj3 = nn.Conv3d(in_channles, in_channles, 1, 1, 0)
-#         self.norm3 = nn.InstanceNorm3d(in_channles)
-#         self.nonliner3 = nn.ReLU()
-#
-#         self.proj4 = nn.Conv3d(in_channles, in_channles, 1, 1, 0)
-#         self.norm4 = nn.InstanceNorm3d(in_channles)
-#         self.nonliner4 = nn.ReLU()
-#
-#     def forward(self, x):
-#         x_residual = x
-#
-#         x1 = self.proj(x)
-#         x1 = self.norm(x1)
-#         x1 = self.nonliner(x1)
-#
-#         x1 = self.proj2(x1)
-#         x1 = self.norm2(x1)
-#         x1 = self.nonliner2(x1)
-#
-#         x2 = self.proj3(x)
-#         x2 = self.norm3(x2)
-#         x2 = self.nonliner3(x2)
-#
-#         x = x1 + x2
-#         x = self.proj4(x)
-#         x = self.norm4(x)
-#         x = self.nonliner4(x)
-#
-#         return x + x_residual
-
-
 class SwinRWKVEncoder(nn.Module):
     def __init__(self, in_chans, depths, dims, window_sizes, out_indices=(0, 1, 2, 3)):
         super().__init__()

@@ -8,9 +8,7 @@ from monai.utils import set_determinism
 
 from datasets.brats import get_brats_loader_from_train, get_single_process_loader_from_train
 from evaluation.metric import dice
-from monai.networks.nets import UNETR, SwinUNETR, SegResNet
-from models.backbones.NNFormer.nnFormer_tumor import nnFormer
-from models.backbones.MedNetXt.mednextv1.create_mednext_v1 import create_mednext_v1
+
 
 from training.trainer import Trainer
 from training.utils import save_new_model_and_delete_last
@@ -27,11 +25,11 @@ logdir = f"./logs/segrwkv-isles2022"
 model_save_path = os.path.join(logdir, architecture)
 # augmentation = "nomirror"
 augmentation = True
-# roi_size = [128, 128, 128]
-roi_size = [64, 128, 128]
+roi_size = [128, 128, 128]
+# roi_size = [64, 128, 128]
 # roi_size = [64, 64, 64]
 
-DATA_TYPE = "iseles"
+DATA_TYPE = "brats"
 
 # torch.backends.cudnn.benchmark = True
 # torch.backends.cudnn.allow_tf32 = False
@@ -182,108 +180,35 @@ if __name__ == "__main__":
     is_single_loader = False
     weight_path = None
     if "brats" in DATA_TYPE.lower():
-        data_dir = f"/home/caoyitong/DataProjects/brats2023/data/fullres/train"
+        data_dir = f""
         in_chans = 4
         out_chans = 4
         spatial_size = 3
-        seed = 42
         num_step_per_epoch = 250
         val_number = 100
     elif "isles" in DATA_TYPE.lower():
-        data_dir = f"/home/caoyitong/DataProjects/ISLES-2022/data/fullres/train"
+        data_dir = f""
         in_chans = 3
         out_chans = 2
         spatial_size = 3
-        seed = 130
         num_step_per_epoch = 250
         val_number = 100
     elif "prostate" in DATA_TYPE.lower():
-        data_dir = f"/home/caoyitong/DataProjects/prostate/data/fullres/train"
+        data_dir = f""
         in_chans = 2
         out_chans = 3
         spatial_size = 3
-        seed = 7330479
         num_step_per_epoch = 100
         val_number = 50
 
-    if architecture == "mmsegrwkv":
-        from models.backbones.MMSegRWKV.mmsegrwkv import MMSegRWKV
-        model = MMSegRWKV(in_chans=in_chans, out_chans=out_chans,
-                            depths=[2, 2, 2, 2], feat_size=[32, 64, 128, 256], window_sizes=[8, 8, 4, 4])
-    # SegResNet
-    elif architecture == "segres_net":
-        model = SegResNet(spatial_dims=spatial_size,
-                          init_filters=32,
-                          in_channels=in_chans,
-                          out_channels=out_chans,
-                          dropout_prob=0.2,
-                          blocks_down=(1, 2, 2, 4),
-                          blocks_up=(1, 1, 1)).to(device)
-    # UNETR
-    elif architecture == "unet_r":
-        model = UNETR(in_channels=in_chans,
-                      out_channels=out_chans,
-                      img_size=roi_size,
-                      proj_type='conv',
-                      norm_name='instance')
-    # SwinUNETR
-    elif architecture == "swinunet_r":
-        model = SwinUNETR(
-            img_size=roi_size,
-            in_channels=in_chans,
-            out_channels=out_chans,
-            feature_size=48,
-            drop_rate=0.1,
-            attn_drop_rate=0.2,
-            dropout_path_rate=0.1,
-            spatial_dims=spatial_size,
-            use_checkpoint=False,
-            use_v2=False)
-    # SwinUNETR
-    elif architecture == "swinunet_r_v2":
-        model = SwinUNETR(
-            img_size=roi_size,
-            in_channels=in_chans,
-            out_channels=out_chans,
-            feature_size=48,
-            drop_rate=0.1,
-            attn_drop_rate=0.2,
-            dropout_path_rate=0.1,
-            spatial_dims=spatial_size,
-            use_checkpoint=False,
-            use_v2=True)
-    # nnFormer
-    elif architecture == "nn_former":
-        model = nnFormer(crop_size=np.array(roi_size),
-                         embedding_dim=96,
-                         input_channels=in_chans,
-                         num_classes=out_chans,
-                         depths=[2, 2, 2, 2],
-                         num_heads=[3, 6, 12, 24],
-                         deep_supervision=False,
-                         conv_op=nn.Conv3d,
-                         patch_size=[4, 4, 4],
-                         window_size=[4, 4, 8, 4])
-    # nnFormer
-    elif architecture == "mednext":
-        model = create_mednext_v1(
-            num_input_channels=in_chans,
-            num_classes=out_chans,
-            model_id='S',  # S, B, M and L are valid model ids
-            kernel_size=3,  # 3x3x3 and 5x5x5 were tested in publication
-            deep_supervision=True  # was used in publication
-        )
+    from models.backbones.MMSegRWKV.mmsegrwkv import MMSegRWKV
+    model = MMSegRWKV(in_chans=in_chans, out_chans=out_chans, depths=[2, 2, 2, 2], feat_size=[32, 64, 128, 256], window_sizes=[8, 8, 4, 4])
+
     if is_single_loader:
         train_ds, val_ds, test_ds = get_single_process_loader_from_train(
-            data_dir, patch_size=roi_size, seed=seed)
+            data_dir, patch_size=roi_size)
     else:
-        train_ds, val_ds, test_ds = get_brats_loader_from_train(data_dir, seed=seed)
-
-    # num_step_per_epoch = math.ceil(len(train_ds) // batch_size)
-    # # BraTS23
-    # num_step_per_epoch = 500
-    # val_number = 150
-    # AIIB23
+        train_ds, val_ds, test_ds = get_brats_loader_from_train(data_dir)
 
     trainer = BraTSTrainer(
         model=model,
